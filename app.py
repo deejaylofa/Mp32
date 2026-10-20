@@ -6,9 +6,10 @@ import yt_dlp
 import zipfile
 
 def search_youtube(query):
+    """Searches YouTube and returns a list of (title, url) tuples."""
     ydl_opts = {
         'format': 'bestaudio/best',
-        'default_search': 'ytsearch5',
+        'default_search': 'ytsearch5:',  # FIXED: Added the required colon here
         'quiet': True,
         'extract_flat': True,
     }
@@ -16,7 +17,13 @@ def search_youtube(query):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(query, download=False)
             if 'entries' in info:
-                return [(entry.get('title'), f"https://www.youtube.com/watch?v={entry.get('id')}") for entry in info['entries']]
+                results = []
+                for entry in info['entries']:
+                    title = entry.get('title')
+                    video_id = entry.get('id')
+                    if title and video_id:
+                        results.append((title, f"https://www.youtube.com/watch?v={video_id}"))
+                return results
     except Exception as e:
         print(f"Search error: {e}")
     return []
@@ -137,6 +144,10 @@ class MusicApp:
         results = search_youtube(query)
         self.results_listbox.delete(0, tk.END)
         self.search_results_cache = results
+
+        if not results:
+            self.status_label.config(text="Status: No results found")
+            return
 
         for title, _ in results:
             self.results_listbox.insert(tk.END, title)
